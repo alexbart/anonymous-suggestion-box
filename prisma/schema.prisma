@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SuggestionCategory {
+  PATIENT_CARE
+  STAFFING
+  EQUIPMENT
+  WORKPLACE_SAFETY
+  STAFF_WELFARE
+  MANAGEMENT
+  COMMUNICATION
+  OTHER
+}
+
+enum SuggestionPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum SuggestionStatus {
+  NEW
+  UNDER_REVIEW
+  PENDING
+  ACTIONED
+  CLOSED
+}
+
+model Suggestion {
+  id            String             @id @default(cuid())
+  referenceCode String             @unique
+  category      SuggestionCategory
+  message       String
+  priority      SuggestionPriority @default(NORMAL)
+  status        SuggestionStatus   @default(NEW)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  attachments Attachment[]
+  notes       SuggestionNote[]
+
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  suggestionId String
+  fileName     String
+  mimeType     String
+  fileSize     Int
+  storageKey   String
+  createdAt    DateTime @default(now())
+
+  suggestion Suggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+
+  @@index([suggestionId])
+}
+
+model SuggestionNote {
+  id           String   @id @default(cuid())
+  suggestionId String
+  note         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  suggestion Suggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+
+  @@index([suggestionId])
+}

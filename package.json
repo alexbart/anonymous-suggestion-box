@@ -1,0 +1,21 @@
+{
+  "name": "anonymous-suggestion-box",
+  "private": true,
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=20.11.0",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "dev:api": "pnpm --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "prisma:migrate": "node scripts/prisma.mjs migrate dev --name create_suggestion_domain",
+    "prisma:generate": "node scripts/prisma.mjs generate",
+    "prisma:studio": "node scripts/prisma.mjs studio",
+    "prisma:format": "node scripts/prisma.mjs format",
+    "db:migrate": "node scripts/prisma.mjs migrate deploy"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

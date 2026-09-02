@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.vite/
+
+# Environment
+.env
+.env.local
+.env.*.local
+apps/api/.env
+
+# Prisma
+# NOTE: prisma/migrations/ must be committed (do not ignore)
+# Local-only junction to expose node_modules for prisma generate (do not commit)
+prisma/node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# TypeScript
+*.tsbuildinfo
