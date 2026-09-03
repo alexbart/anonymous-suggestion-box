@@ -22,6 +22,11 @@ prisma/node_modules/
 # Uploaded files
 apps/api/uploads/
 
+# Local screenshots
+*.PNG
+*.png
+screen*.PNG
+
 # Logs
 *.log
 npm-debug.log*
