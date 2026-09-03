@@ -14,7 +14,8 @@
     "prisma:studio": "node scripts/prisma.mjs studio",
     "prisma:format": "node scripts/prisma.mjs format",
     "db:migrate": "node scripts/prisma.mjs migrate deploy",
-    "db:seed": "node --import ./apps/api/node_modules/tsx/dist/loader.mjs prisma/seed.ts"
+    "db:seed": "node --import ./apps/api/node_modules/tsx/dist/loader.mjs prisma/seed.ts",
+    "docs:pdf": "node scripts/docs-pdf.mjs"
   },
   "devDependencies": {
     "typescript": "^5.4.5"
