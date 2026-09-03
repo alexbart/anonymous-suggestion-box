@@ -13,7 +13,8 @@
     "prisma:generate": "node scripts/prisma.mjs generate",
     "prisma:studio": "node scripts/prisma.mjs studio",
     "prisma:format": "node scripts/prisma.mjs format",
-    "db:migrate": "node scripts/prisma.mjs migrate deploy"
+    "db:migrate": "node scripts/prisma.mjs migrate deploy",
+    "db:seed": "node --import ./apps/api/node_modules/tsx/dist/loader.mjs prisma/seed.ts"
   },
   "devDependencies": {
     "typescript": "^5.4.5"

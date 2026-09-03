@@ -80,3 +80,16 @@ model SuggestionNote {
 
   @@index([suggestionId])
 }
+
+model AdminUser {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  isActive     Boolean  @default(true)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([email])
+  @@index([isActive])
+}
