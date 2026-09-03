@@ -1,45 +1,16 @@
-import Fastify from "fastify";
-import cors from "@fastify/cors";
-import rateLimit from "@fastify/rate-limit";
-import { registerSuggestionRoutes } from "./routes/suggestions.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { config } from "dotenv";
+import { buildApp } from "./app.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+config({ path: path.resolve(__dirname, "..", ".env") });
 
 const PORT = Number(process.env.API_PORT ?? 3001);
 const HOST = process.env.API_HOST ?? "0.0.0.0";
 
-async function buildServer() {
-  const app = Fastify({
-    logger: {
-      level: process.env.LOG_LEVEL ?? "info",
-    },
-    trustProxy: true,
-  });
-
-  await app.register(cors, {
-    origin: process.env.WEB_ORIGIN ?? "http://localhost:5173",
-    credentials: true,
-  });
-
-  await app.register(rateLimit, {
-    global: false,
-  });
-
-  app.get("/health", async () => ({
-    success: true,
-    data: { status: "ok", service: "api", timestamp: new Date().toISOString() },
-  }));
-
-  await registerSuggestionRoutes(app, {
-    submitRateLimit: {
-      max: 10,
-      timeWindow: "15 minutes",
-    },
-  });
-
-  return app;
-}
-
 async function main() {
-  const app = await buildServer();
+  const app = await buildApp();
   try {
     await app.listen({ port: PORT, host: HOST });
   } catch (err) {

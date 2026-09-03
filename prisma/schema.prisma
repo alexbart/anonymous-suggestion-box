@@ -48,16 +48,20 @@ model Suggestion {
 
   @@index([status])
   @@index([category])
+  @@index([priority])
   @@index([createdAt])
 }
 
 model Attachment {
   id           String   @id @default(cuid())
   suggestionId String
-  fileName     String
+
+  originalName String
+  storedName   String
   mimeType     String
-  fileSize     Int
-  storageKey   String
+  size         Int
+  storagePath  String
+
   createdAt    DateTime @default(now())
 
   suggestion Suggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
