@@ -1,10 +1,8 @@
-import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAdmin } from "../middleware/admin-auth.js";
-import { getStoredFilePath } from "../utils/file-storage.js";
+import { storage } from "../utils/file-storage.js";
 
 export async function adminAttachmentRoutes(
   app: FastifyInstance,
@@ -48,11 +46,19 @@ export async function adminAttachmentRoutes(
         });
       }
 
-      const filePath = getStoredFilePath(attachment.storedName);
+      const exists = await storage.exists(attachment.storedName);
+      if (!exists) {
+        return reply.code(404).send({
+          success: false,
+          error: {
+            code: "FILE_NOT_FOUND",
+            message: "Attachment file not found",
+          },
+        });
+      }
 
-      try {
-        await stat(filePath);
-      } catch {
+      const stream = await storage.read(attachment.storedName);
+      if (!stream) {
         return reply.code(404).send({
           success: false,
           error: {
@@ -68,7 +74,7 @@ export async function adminAttachmentRoutes(
         `attachment; filename="${encodeURIComponent(attachment.originalName)}"`,
       );
 
-      return reply.send(createReadStream(filePath));
+      return reply.send(stream);
     },
   );
 }

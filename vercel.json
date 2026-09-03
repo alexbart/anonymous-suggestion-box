@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm prisma:generate && pnpm --filter api build && pnpm --filter web build",
+  "installCommand": "pnpm install",
+  "framework": null,
+  "builds": [
+    {
+      "src": "apps/api/dist/server.js",
+      "use": "@vercel/node",
+      "config": { "maxDuration": 30, "memory": 512 }
+    },
+    {
+      "src": "apps/web/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "apps/api/dist/server.js" },
+    { "src": "/health", "dest": "apps/api/dist/server.js" },
+    { "src": "/(.*)", "dest": "apps/web/dist/$1" }
+  ]
+}
