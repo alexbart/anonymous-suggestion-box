@@ -161,7 +161,7 @@ export async function adminSuggestionRoutes(
     { preHandler: requireAdmin },
     async (request, reply) => {
       const paramsSchema = z.object({
-        id: z.string().min(1).max(64),
+        id: z.string().regex(/^c[a-z0-9]{24,}$/i, "Invalid CUID format"),
       });
 
       const parsed = paramsSchema.safeParse(request.params);
@@ -226,7 +226,7 @@ export async function adminSuggestionRoutes(
     { preHandler: requireAdmin },
     async (request, reply) => {
       const paramsSchema = z.object({
-        id: z.string().min(1).max(64),
+        id: z.string().regex(/^c[a-z0-9]{24,}$/i, "Invalid CUID format"),
       });
       const bodySchema = z.object({
         status: z.enum(statuses),
@@ -303,7 +303,7 @@ export async function adminSuggestionRoutes(
     { preHandler: requireAdmin },
     async (request, reply) => {
       const paramsSchema = z.object({
-        id: z.string().min(1).max(64),
+        id: z.string().regex(/^c[a-z0-9]{24,}$/i, "Invalid CUID format"),
       });
       const bodySchema = z.object({
         note: z.string().trim().min(1).max(5000),

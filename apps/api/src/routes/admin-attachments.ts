@@ -14,8 +14,8 @@ export async function adminAttachmentRoutes(
     { preHandler: requireAdmin },
     async (request, reply) => {
       const paramsSchema = z.object({
-        id: z.string().min(1).max(64),
-        attachmentId: z.string().min(1).max(64),
+        id: z.string().regex(/^c[a-z0-9]{24,}$/i, "Invalid CUID format"),
+        attachmentId: z.string().regex(/^c[a-z0-9]{24,}$/i, "Invalid CUID format"),
       });
 
       const parsed = paramsSchema.safeParse(request.params);
