@@ -1,5 +1,3 @@
-import { createWriteStream } from "node:fs";
-import { pipeline } from "node:stream/promises";
 import type { FastifyInstance, FastifyPluginOptions } from "fastify";
 import { prisma } from "../db.js";
 import { SubmitSuggestionSchema, ReferenceCodeParamSchema } from "../validation/suggestion.js";
@@ -8,7 +6,7 @@ import {
   deleteStoredFile,
   ensureUploadDirectory,
   generateStoredFilename,
-  getStoredFilePath,
+  storage,
   validateFileType,
   MAX_FILES,
   MAX_FILE_SIZE,
@@ -73,9 +71,9 @@ export async function registerSuggestionRoutes(
           }
 
           const storedName = generateStoredFilename(part.filename);
-          const storagePath = getStoredFilePath(storedName);
+          const storagePath = storedName; // logical path = the stored filename
 
-          await pipeline(part.file, createWriteStream(storagePath));
+          await storage.put(storedName, part.file);
 
           const size = part.file.bytesRead;
 
