@@ -2,7 +2,11 @@ import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import multipart from "@fastify/multipart";
+import cookie from "@fastify/cookie";
 import { registerSuggestionRoutes } from "./routes/suggestions.js";
+import { adminAuthRoutes } from "./routes/admin-auth.js";
+import { adminSuggestionRoutes } from "./routes/admin-suggestions.js";
+import { adminAttachmentRoutes } from "./routes/admin-attachments.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -16,6 +20,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     origin: process.env.WEB_ORIGIN ?? "http://localhost:5173",
     credentials: true,
   });
+
+  await app.register(cookie);
 
   await app.register(rateLimit, {
     global: false,
@@ -39,6 +45,9 @@ export async function buildApp(): Promise<FastifyInstance> {
       await registerSuggestionRoutes(instance, {
         submitRateLimit: { max: 10, timeWindow: "15 minutes" },
       });
+      await adminAuthRoutes(instance);
+      await adminSuggestionRoutes(instance);
+      await adminAttachmentRoutes(instance);
     },
     { prefix: "/api/v1" },
   );
