@@ -16,6 +16,7 @@
     "@fastify/rate-limit": "^9.1.0",
     "@prisma/client": "^5.18.0",
     "@suggestion-box/shared": "workspace:*",
+    "dotenv": "^17.4.2",
     "fastify": "^4.28.1",
     "zod": "^3.23.8"
   },

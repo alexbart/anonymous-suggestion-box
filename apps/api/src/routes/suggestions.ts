@@ -34,7 +34,7 @@ export async function registerSuggestionRoutes(
   const submitLimit = options.submitRateLimit ?? { max: 10, timeWindow: "15 minutes" };
 
   app.post(
-    "/api/v1/suggestions",
+    "/suggestions",
     {
       config: {
         rateLimit: submitLimit,
@@ -176,7 +176,7 @@ export async function registerSuggestionRoutes(
   );
 
   app.get(
-    "/api/v1/suggestions/:referenceCode",
+    "/suggestions/:referenceCode",
     {
       config: {
         rateLimit: {
