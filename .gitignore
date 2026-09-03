@@ -18,6 +18,9 @@ apps/api/.env
 # Local-only junction to expose node_modules for prisma generate (do not commit)
 prisma/node_modules/
 
+# Uploaded files
+apps/api/uploads/
+
 # Logs
 *.log
 npm-debug.log*

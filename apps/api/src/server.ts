@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
+import multipart from "@fastify/multipart";
 import { registerSuggestionRoutes } from "./routes/suggestions.js";
 
 const PORT = Number(process.env.API_PORT ?? 3001);
@@ -21,6 +22,14 @@ async function buildServer() {
 
   await app.register(rateLimit, {
     global: false,
+  });
+
+  await app.register(multipart, {
+    limits: {
+      files: 5,
+      fileSize: 10 * 1024 * 1024,
+      parts: 15,
+    },
   });
 
   app.get("/health", async () => ({
