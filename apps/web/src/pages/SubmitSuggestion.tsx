@@ -21,7 +21,11 @@ const priorities = [
   { value: "URGENT", label: "Urgent" },
 ];
 
-export default function SubmitSuggestion() {
+export default function SubmitSuggestion({
+  onCheckStatus,
+}: {
+  onCheckStatus: () => void;
+}) {
   const [category, setCategory] = useState("");
   const [priority, setPriority] = useState("NORMAL");
   const [message, setMessage] = useState("");
@@ -131,6 +135,14 @@ export default function SubmitSuggestion() {
               Save this reference number. You can use it later to check the
               status of your suggestion.
             </p>
+
+            <button
+              type="button"
+              onClick={onCheckStatus}
+              className="mt-3 w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white"
+            >
+              Check my submission
+            </button>
 
             <button
               type="button"
@@ -338,10 +350,18 @@ export default function SubmitSuggestion() {
             {isSubmitting ? "Submitting..." : "Submit anonymously"}
           </button>
 
-          <p className="pb-6 text-center text-xs leading-5 text-slate-400">
+          <p className="pb-2 text-center text-xs leading-5 text-slate-400">
             No name, email, phone number, staff ID, ward, or account is
             required.
           </p>
+
+          <button
+            type="button"
+            onClick={onCheckStatus}
+            className="mx-auto block pb-6 text-sm font-semibold text-slate-700 underline underline-offset-4"
+          >
+            Already submitted? Check your status
+          </button>
         </form>
       </div>
     </main>

@@ -31,3 +31,19 @@ export async function submitSuggestion(data: {
 
   return response.data;
 }
+
+export interface SuggestionStatusResponse {
+  success: boolean;
+  data: {
+    referenceCode: string;
+    status: string;
+  };
+}
+
+export async function getSuggestionStatus(referenceCode: string) {
+  const response = await api.get<SuggestionStatusResponse>(
+    `/suggestions/${encodeURIComponent(referenceCode)}`,
+  );
+
+  return response.data;
+}
