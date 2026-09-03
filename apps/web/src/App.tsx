@@ -28,6 +28,17 @@ function App() {
       });
   }, [page]);
 
+  useEffect(() => {
+    const onUnauthorized = () => {
+      setAdmin(null);
+      setPage("admin-login");
+    };
+    window.addEventListener("admin:unauthorized", onUnauthorized);
+    return () => {
+      window.removeEventListener("admin:unauthorized", onUnauthorized);
+    };
+  }, []);
+
   if (page === "check") {
     return <CheckSuggestion onBack={() => setPage("submit")} />;
   }

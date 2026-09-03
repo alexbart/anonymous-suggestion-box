@@ -86,54 +86,72 @@ export default function AdminDashboard({
   const [detail, setDetail] = useState<AdminSuggestionDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  async function refreshSummary() {
-    try {
-      const res = await getDashboardSummary();
-      setSummary(res.data);
-    } catch {
-      /* ignore — handled in main load */
-    }
-  }
-
-  async function loadList() {
-    setLoading(true);
-    setError("");
-    try {
-      const params: AdminSuggestionListParams = { page: 1, limit: 50 };
-      if (statusFilter) params.status = statusFilter;
-      if (categoryFilter) params.category = categoryFilter;
-      if (priorityFilter) params.priority = priorityFilter;
-      if (search.trim()) params.search = search.trim();
-
-      const res = await getAdminSuggestions(params);
-      setItems(res.data.items);
-      setTotal(res.data.pagination.total);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(
-        e?.response?.data?.error?.message ??
-          "We couldn't load suggestions right now.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await getDashboardSummary();
+        if (!cancelled) setSummary(res.data);
+      } catch {
+        if (!cancelled) setSummary(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
-    void refreshSummary();
-    void loadList();
-  }, [statusFilter, categoryFilter, priorityFilter]);
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const params: AdminSuggestionListParams = { page: 1, limit: 50 };
+        if (statusFilter) params.status = statusFilter;
+        if (categoryFilter) params.category = categoryFilter;
+        if (priorityFilter) params.priority = priorityFilter;
+        if (search.trim()) params.search = search.trim();
+
+        const res = await getAdminSuggestions(params);
+        if (cancelled) return;
+        setItems(res.data.items);
+        setTotal(res.data.pagination.total);
+      } catch (err: unknown) {
+        if (cancelled) return;
+        const e = err as { response?: { data?: { error?: { message?: string } } } };
+        setError(
+          e?.response?.data?.error?.message ??
+            "We couldn't load suggestions right now.",
+        );
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [statusFilter, categoryFilter, priorityFilter, search]);
 
   useEffect(() => {
     if (!selectedId) {
-      setDetail(null);
       return;
     }
+    let cancelled = false;
     setDetailLoading(true);
     getAdminSuggestion(selectedId)
-      .then((res) => setDetail(res.data))
-      .catch(() => setDetail(null))
-      .finally(() => setDetailLoading(false));
+      .then((res) => {
+        if (!cancelled) setDetail(res.data);
+      })
+      .catch(() => {
+        if (!cancelled) setDetail(null);
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [selectedId]);
 
   async function handleLogout() {
@@ -178,8 +196,11 @@ export default function AdminDashboard({
       </header>
 
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-6">
-        {summary && (
-          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {summary ? (
+          <section
+            aria-label="Dashboard summary"
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
+          >
             <SummaryCard label="Total" value={summary.total} accent="bg-slate-900" />
             <SummaryCard label="New" value={summary.new} accent="bg-blue-600" />
             <SummaryCard
@@ -203,86 +224,133 @@ export default function AdminDashboard({
               accent="bg-slate-500"
             />
           </section>
+        ) : (
+          <section
+            aria-busy="true"
+            className="rounded-2xl bg-white p-6 text-center text-sm text-slate-500 shadow-sm"
+          >
+            Loading dashboard…
+          </section>
         )}
 
-        <section className="rounded-2xl bg-white p-4 shadow-sm">
+        <section
+          aria-label="Filters"
+          className="rounded-2xl bg-white p-4 shadow-sm"
+        >
           <h2 className="text-sm font-semibold text-slate-900">Filters</h2>
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void loadList();
-              }}
-              placeholder="Search reference or message"
-              className="rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
-            />
-            <select
-              value={statusFilter}
-              onChange={(e) =>
-                setStatusFilter(e.target.value as SuggestionStatus | "")
-              }
-              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
-            >
-              <option value="">All statuses</option>
-              {SUGGESTION_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {STATUS_LABELS[s]}
-                </option>
-              ))}
-            </select>
-            <select
-              value={categoryFilter}
-              onChange={(e) =>
-                setCategoryFilter(e.target.value as SuggestionCategory | "")
-              }
-              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
-            >
-              <option value="">All categories</option>
-              {SUGGESTION_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {CATEGORY_LABELS[c]}
-                </option>
-              ))}
-            </select>
-            <select
-              value={priorityFilter}
-              onChange={(e) =>
-                setPriorityFilter(e.target.value as SuggestionPriority | "")
-              }
-              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
-            >
-              <option value="">All priorities</option>
-              {SUGGESTION_PRIORITIES.map((p) => (
-                <option key={p} value={p}>
-                  {PRIORITY_LABELS[p]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="mt-3 flex items-center justify-between">
+
+          <form
+            role="search"
+            onSubmit={(e) => {
+              e.preventDefault();
+            }}
+            className="mt-3 space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-4"
+          >
+            <div>
+              <label
+                htmlFor="filter-search"
+                className="mb-1 block text-xs font-medium text-slate-600 sm:sr-only"
+              >
+                Search
+              </label>
+              <input
+                id="filter-search"
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search reference or message"
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-base outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="filter-status"
+                className="mb-1 block text-xs font-medium text-slate-600 sm:sr-only"
+              >
+                Status
+              </label>
+              <select
+                id="filter-status"
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as SuggestionStatus | "")
+                }
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+              >
+                <option value="">All statuses</option>
+                {SUGGESTION_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {STATUS_LABELS[s]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="filter-category"
+                className="mb-1 block text-xs font-medium text-slate-600 sm:sr-only"
+              >
+                Category
+              </label>
+              <select
+                id="filter-category"
+                value={categoryFilter}
+                onChange={(e) =>
+                  setCategoryFilter(e.target.value as SuggestionCategory | "")
+                }
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+              >
+                <option value="">All categories</option>
+                {SUGGESTION_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {CATEGORY_LABELS[c]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="filter-priority"
+                className="mb-1 block text-xs font-medium text-slate-600 sm:sr-only"
+              >
+                Priority
+              </label>
+              <select
+                id="filter-priority"
+                value={priorityFilter}
+                onChange={(e) =>
+                  setPriorityFilter(e.target.value as SuggestionPriority | "")
+                }
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+              >
+                <option value="">All priorities</option>
+                {SUGGESTION_PRIORITIES.map((p) => (
+                  <option key={p} value={p}>
+                    {PRIORITY_LABELS[p]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </form>
+
+          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-slate-500">
-              {total} {total === 1 ? "result" : "results"}
+              {loading
+                ? "Loading…"
+                : `${total} ${total === 1 ? "result" : "results"}`}
             </p>
-            <div className="flex gap-2">
-              {(statusFilter || categoryFilter || priorityFilter || search) && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700"
-                >
-                  Clear
-                </button>
-              )}
+            {(statusFilter || categoryFilter || priorityFilter || search) && (
               <button
                 type="button"
-                onClick={() => void loadList()}
-                className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
+                onClick={clearFilters}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 sm:px-3 sm:py-2"
               >
-                Apply
+                Clear filters
               </button>
-            </div>
+            )}
           </div>
         </section>
 
@@ -300,12 +368,29 @@ export default function AdminDashboard({
             Suggestions
           </h2>
           {loading ? (
-            <div className="rounded-2xl bg-white p-6 text-center text-sm text-slate-500 shadow-sm">
-              Loading…
+            <div
+              aria-busy="true"
+              className="rounded-2xl bg-white p-6 text-center text-sm text-slate-500 shadow-sm"
+            >
+              Loading suggestions…
             </div>
           ) : items.length === 0 ? (
-            <div className="rounded-2xl bg-white p-6 text-center text-sm text-slate-500 shadow-sm">
-              No suggestions match the current filters.
+            <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
+              <p className="text-sm font-semibold text-slate-900">
+                No suggestions found
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                Try changing your filters or search term.
+              </p>
+              {(statusFilter || categoryFilter || priorityFilter || search) && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="mt-3 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           ) : (
             <ul className="space-y-3">
@@ -358,12 +443,30 @@ export default function AdminDashboard({
           suggestionId={selectedId}
           detail={detail}
           loading={detailLoading}
-          onClose={() => setSelectedId(null)}
+          onClose={() => {
+            setSelectedId(null);
+            setDetail(null);
+          }}
           onChanged={async () => {
-            await refreshSummary();
-            await loadList();
-            const res = await getAdminSuggestion(selectedId);
-            setDetail(res.data);
+            try {
+              const params: AdminSuggestionListParams = { page: 1, limit: 50 };
+              if (statusFilter) params.status = statusFilter;
+              if (categoryFilter) params.category = categoryFilter;
+              if (priorityFilter) params.priority = priorityFilter;
+              if (search.trim()) params.search = search.trim();
+
+              const [summaryRes, listRes, detailRes] = await Promise.all([
+                getDashboardSummary(),
+                getAdminSuggestions(params),
+                getAdminSuggestion(selectedId),
+              ]);
+              setSummary(summaryRes.data);
+              setItems(listRes.data.items);
+              setTotal(listRes.data.pagination.total);
+              setDetail(detailRes.data);
+            } catch {
+              /* surface in row UI */
+            }
           }}
         />
       )}
@@ -414,9 +517,7 @@ function SuggestionDetail({
     setUpdatingStatus(true);
     setError("");
     try {
-      await (
-        await import("../api/admin")
-      ).updateAdminSuggestion(detail.id, nextStatus);
+      await updateAdminSuggestion(detail.id, nextStatus);
       await onChanged();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
