@@ -5,6 +5,8 @@ import multipart from "@fastify/multipart";
 import cookie from "@fastify/cookie";
 import { registerSuggestionRoutes } from "./routes/suggestions.js";
 import { adminAuthRoutes } from "./routes/admin-auth.js";
+import { adminSuggestionRoutes } from "./routes/admin-suggestions.js";
+import { adminAttachmentRoutes } from "./routes/admin-attachments.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -44,6 +46,8 @@ export async function buildApp(): Promise<FastifyInstance> {
         submitRateLimit: { max: 10, timeWindow: "15 minutes" },
       });
       await adminAuthRoutes(instance);
+      await adminSuggestionRoutes(instance);
+      await adminAttachmentRoutes(instance);
     },
     { prefix: "/api/v1" },
   );
